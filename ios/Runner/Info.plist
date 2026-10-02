@@ -55,5 +55,15 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera to upload profile pictures and homework documents.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to your photo library to select photos and documents for upload.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires microphone access for recording audio or videos when attaching files.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app requires location access to track school transport vehicles on the map.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
