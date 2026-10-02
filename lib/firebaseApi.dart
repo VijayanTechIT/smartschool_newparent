@@ -158,7 +158,16 @@ class Firebaseapi {
       color: const Color(0xFF2d4c9c),
     );
 
-    NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     await _flutterLocalNotificationsPlugin.show(
       0,
@@ -186,7 +195,16 @@ class Firebaseapi {
       ledColor: const Color(0xFF2d4c9c),
     );
 
-    NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     await _flutterLocalNotificationsPlugin.show(
       0,

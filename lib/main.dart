@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_school_parent/academic_bloc/academic_year_bloc.dart';
 import 'package:smart_school_parent/fees_payment/fees_payment_bloc.dart';
 import 'package:smart_school_parent/fees_payment/fees_term/fees_term_bloc.dart';
@@ -47,6 +49,54 @@ Future<void> _initialization() async {
   }
 
   try {
+    // 🔔 Explicitly request notification permissions (required for iOS)
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    debugPrint("User notification permission: ${settings.authorizationStatus}");
+
+    // Show banners even when app is open in foreground on iOS
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Retrieve tokens for debugging & verification
+    try {
+      if (Platform.isIOS) {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        debugPrint("iOS APNS Token: $apnsToken");
+      }
+      String? token = await FirebaseMessaging.instance.getToken();
+      debugPrint("FCM Device Token: $token");
+    } catch (e) {
+      debugPrint("Error fetching tokens: $e");
+    }
+
+    // Ensure student & school topics are subscribed if student is logged in
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? schoolCode = prefs.getString("schoolCode");
+      String? studentId = prefs.getString("studentId");
+      if (schoolCode != null && schoolCode.isNotEmpty) {
+        await FirebaseMessaging.instance.subscribeToTopic(schoolCode);
+        debugPrint("Subscribed to topic: $schoolCode");
+      }
+      if (studentId != null && studentId.isNotEmpty) {
+        await FirebaseMessaging.instance.subscribeToTopic(studentId);
+        debugPrint("Subscribed to topic: $studentId");
+      }
+    } catch (e) {
+      debugPrint("Error auto-subscribing to topics: $e");
+    }
+
     // 🔔 Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
