@@ -1,0 +1,54 @@
+workflows:
+  ios-release:
+    name: iOS App Store Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.35.6
+      xcode: latest
+      cocoapods: default
+      groups:
+        - app_store_credentials # Environment group configured in Codemagic UI
+      vars:
+        BUNDLE_ID: "com.vijayantech.smartSchoolParent" # Update to match your iOS bundle ID in App Store Connect
+    scripts:
+      - name: Set up code signing
+        script: |
+          # Automatically fetch or generate signing certificates using App Store Connect API
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Get Flutter dependencies
+        script: |
+          flutter pub get
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
+      - name: Build IPA for App Store
+        script: |
+          # Build release IPA targeting Class Connect (or adjust entry point as needed)
+          flutter build ipa --release \
+            -t lib/main_class_connect.dart \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        # Set to true to upload to TestFlight automatically
+        submit_to_testflight: true
+        # Set to true to submit for App Store review automatically
+        submit_to_app_store: false

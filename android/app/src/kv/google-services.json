@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "642647276475",
+    "project_id": "smart-school-3f62a",
+    "storage_bucket": "smart-school-3f62a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:642647276475:android:d56db09d7a826570e5a29e",
+        "android_client_info": {
+          "package_name": "com.example.smart_school_parent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZqESG7I7pWRSFY6SCAbk4XvYM4XzoZhs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:642647276475:android:6a0f59262b1f7aa1e5a29e",
+        "android_client_info": {
+          "package_name": "com.vijayantech.smart_school"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZqESG7I7pWRSFY6SCAbk4XvYM4XzoZhs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
