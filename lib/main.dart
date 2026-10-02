@@ -1,10 +1,8 @@
-// main.dart
 import 'package:flutter/material.dart';
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:smart_school_parent/academic_bloc/academic_year_bloc.dart';
 import 'package:smart_school_parent/fees_payment/fees_payment_bloc.dart';
 import 'package:smart_school_parent/fees_payment/fees_term/fees_term_bloc.dart';
@@ -29,27 +27,69 @@ final navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point') // Fix for AOT compilation
 Future<void> _firebaseBackgroundMessage(RemoteMessage message) async {
-  if (message.notification != null) {
-    navigatorKey.currentState?.push(MaterialPageRoute(
-      builder: (_) => const NotificationListScreen(),
-    ));
+  try {
+    if (message.notification != null) {
+      navigatorKey.currentState?.push(MaterialPageRoute(
+        builder: (_) => const NotificationListScreen(),
+      ));
+    }
+  } catch (e) {
+    debugPrint("Background notification handling error: $e");
   }
 }
 
 
-_initialization()async{
+Future<void> _initialization() async {
+  try {
+    await Firebaseapi.localNotiInit();
+  } catch (e, stack) {
+    debugPrint("Local notification init error: $e\n$stack");
+  }
 
-  await Firebaseapi.localNotiInit();
+  try {
+    // 🔔 Foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        final title = message.notification?.title ?? '';
+        final body = message.notification?.body ?? '';
+        final image = message.notification?.android?.imageUrl ??
+            message.notification?.apple?.imageUrl ??
+            message.data['image'];
 
-    await FlutterDownloader.initialize(debug: true);
+        Firebaseapi.showLocalNotification(title, body, imageUrl: image);
+      }
+      try {
+        FirebaseAnalytics.instance.logEvent(name: 'fcm_opened', parameters: {
+          'message_id': message.messageId ?? "",
+          'screen': 'OwnerNotification',
+        });
+      } catch (_) {}
+    });
 
+    FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessage);
 
+    // Check if the app was launched via a notification tap
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
 
+    if (initialMessage != null) {
+      try {
+        FirebaseAnalytics.instance.logEvent(name: 'fcm_opened', parameters: {
+          'message_id': initialMessage.messageId ?? "",
+          'screen': 'OwnerNotification',
+        });
+      } catch (_) {}
 
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleNotificationNavigation(initialMessage);
+      });
+    }
+  } catch (e, stack) {
+    debugPrint("FCM initialization error: $e\n$stack");
+  }
+}
 
-  // 🔔 Foreground messages
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    // For example, navigate to NotificationListScreen
+void _handleNotificationNavigation(RemoteMessage message) {
+  try {
     if (message.notification != null) {
       final title = message.notification?.title ?? '';
       final body = message.notification?.body ?? '';
@@ -59,53 +99,24 @@ _initialization()async{
 
       Firebaseapi.showLocalNotification(title, body, imageUrl: image);
     }
-    // Firebaseapi.showLocalNotification(message.notification?.title,
-    //     message.notification?.body,imageUrl:  message.data['image']);
-    FirebaseAnalytics.instance.logEvent(name: 'fcm_opened', parameters: {
-      'message_id': message.messageId ?? "",
-      'screen': 'OwnerNotification',
-    });
 
-  });
-  FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessage);
-// Check if the app was launched via a notification tap
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-
-  if(initialMessage != null){
-    FirebaseAnalytics.instance.logEvent(name: 'fcm_opened', parameters: {
-      'message_id': initialMessage.messageId ?? "",
-      'screen': 'OwnerNotification',
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _handleNotificationNavigation(initialMessage);
-    });
-  }else{
-
+    navigatorKey.currentState?.push(MaterialPageRoute(
+      builder: (_) => const NotificationListScreen(),
+    ));
+  } catch (e) {
+    debugPrint("Notification navigation error: $e");
   }
-
 }
-void _handleNotificationNavigation(RemoteMessage message) {
-  // For example, navigate to NotificationListScreen
-  if (message.notification != null) {
-    final title = message.notification?.title ?? '';
-    final body = message.notification?.body ?? '';
-    final image = message.notification?.android?.imageUrl ??
-        message.notification?.apple?.imageUrl ??
-        message.data['image'];
 
-    Firebaseapi.showLocalNotification(title, body, imageUrl: image);
-  }
-
-  navigatorKey.currentState?.push(MaterialPageRoute(
-    builder: (_) => const NotificationListScreen(),
-  ));
-}
 void main({String? flavor}) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e, stack) {
+    debugPrint("Firebase.initializeApp error: $e\n$stack");
+  }
 
 
   // Determine app settings based on flavor

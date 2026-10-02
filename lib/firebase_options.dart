@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '642647276475',
     projectId: 'smart-school-3f62a',
     storageBucket: 'smart-school-3f62a.firebasestorage.app',
-    iosBundleId: 'com.example.smartSchoolParent',
+    iosBundleId: 'com.vijayantech.smartSchoolParent',
   );
 
 }

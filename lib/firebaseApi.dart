@@ -87,26 +87,36 @@ class Firebaseapi {
         ?.requestNotificationsPermission();
 
 
-    _flutterLocalNotificationsPlugin.initialize(
+    await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: onNotificationTap,
-      onDidReceiveBackgroundNotificationResponse: onNotificationTap,
+      onDidReceiveBackgroundNotificationResponse: onNotificationTapBackground,
     );
   }
 
+  @pragma('vm:entry-point')
   static void onNotificationTap(NotificationResponse notificationResponse) {
-    final payload = notificationResponse.payload;
-    if (payload != null && payload.isNotEmpty) {
-      _openFile(payload);
-    } else {
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(builder: (_) => const NotificationListScreen()),
-      );
+    try {
+      final payload = notificationResponse.payload;
+      if (payload != null && payload.isNotEmpty) {
+        _openFile(payload);
+      } else {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const NotificationListScreen()),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error handling notification tap: $e");
     }
   }
 
+  @pragma('vm:entry-point')
   static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    showLocalNotification(message.notification?.title, message.notification?.body);
+    try {
+      showLocalNotification(message.notification?.title, message.notification?.body);
+    } catch (e) {
+      debugPrint("Error in FCM background handler: $e");
+    }
   }
 
   static void showLocalNotification(String? title, String? body, {String? imageUrl}) async {
@@ -226,4 +236,12 @@ class Firebaseapi {
 
 Future<void> _openFile(String filePath) async {
   final result = await OpenFilex.open(filePath);
+}
+
+@pragma('vm:entry-point')
+void onNotificationTapBackground(NotificationResponse notificationResponse) {
+  final payload = notificationResponse.payload;
+  if (payload != null && payload.isNotEmpty) {
+    _openFile(payload);
+  }
 }
