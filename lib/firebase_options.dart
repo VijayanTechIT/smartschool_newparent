@@ -59,7 +59,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAj61A-geRozUtM97bH2ktWDgCLqZauegw',
-    appId: '1:642647276475:ios:60ab6136c71d3bfae5a29e',
+    appId: '1:642647276475:ios:77d19b1c77aeea02e5a29e',
     messagingSenderId: '642647276475',
     projectId: 'smart-school-3f62a',
     storageBucket: 'smart-school-3f62a.firebasestorage.app',
