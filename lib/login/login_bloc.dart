@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../helper/push_notification_service.dart';
 import '../student/StudentModel.dart';
 
 
@@ -59,13 +60,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         StudentWhole student = StudentWhole.fromJson(jsonData);
         await prefs.setString('schoolCode', student.schoolCode);
         await prefs.setString('studentId', student.studentId);
-        try {
-          await FirebaseMessaging.instance.subscribeToTopic(student.schoolCode);
-          await FirebaseMessaging.instance.subscribeToTopic(student.studentId);
-          debugPrint("Check status subscribed to: ${student.schoolCode}, ${student.studentId}");
-        } catch (e) {
-          debugPrint("Check status topic subscription error: $e");
-        }
+        PushNotificationService.subscribeTopicsSafely(
+          schoolCode: student.schoolCode,
+          studentId: student.studentId,
+        );
         emit(LoginSuccess(student));
       } catch (e) {
         emit(LoginFailure());
@@ -85,13 +83,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       await prefs.setString('StudentData', json.encode(event.student.toJson()));
       await prefs.setString('schoolCode', event.student.schoolCode);
       await prefs.setString('studentId', event.student.studentId);
-      try {
-        await FirebaseMessaging.instance.subscribeToTopic(event.student.schoolCode);
-        await FirebaseMessaging.instance.subscribeToTopic(event.student.studentId);
-        debugPrint("Login subscribed to: ${event.student.schoolCode}, ${event.student.studentId}");
-      } catch (e) {
-        debugPrint("Login topic subscription error: $e");
-      }
+      PushNotificationService.subscribeTopicsSafely(
+        schoolCode: event.student.schoolCode,
+        studentId: event.student.studentId,
+      );
       emit(LoginSuccess(event.student));
     } catch (e) {
       emit(LoginFailure());

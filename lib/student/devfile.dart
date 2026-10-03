@@ -31,6 +31,7 @@ import '../helper/sibling_api_loca.dart';
 import '../models/siblings_model.dart';
 import '../student/profile_information.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../helper/push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -130,6 +131,10 @@ class _StudentHomeState extends State<StudentHome> {
       }
     });
     _fetchData();
+    PushNotificationService.subscribeTopicsSafely(
+      schoolCode: widget.student.schoolCode,
+      studentId: widget.student.studentId,
+    );
     super.initState();
   }
   bool isLoading = false;
@@ -165,12 +170,6 @@ class _StudentHomeState extends State<StudentHome> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("schoolCode", widget.student.schoolCode);
       prefs.setString("studentId", widget.student.studentId);
-      try {
-        await FirebaseMessaging.instance.subscribeToTopic(widget.student.schoolCode);
-        await FirebaseMessaging.instance.subscribeToTopic(widget.student.studentId);
-      } catch (e) {
-        debugPrint("Error subscribing to topics: $e");
-      }
       context.read<HomeWorkBloc>().add(FetchHomework(
           schoolCode: widget.student.schoolCode,
           sectionName: widget.student.studyingSection,
@@ -187,9 +186,7 @@ class _StudentHomeState extends State<StudentHome> {
       notifications = value;
       notification = value.length;
 
-      setState((){
-        FirebaseMessaging.instance.subscribeToTopic(widget.student.studentId);
-      });
+      setState((){});
     });
 
     context.read<StClassTestBloc>().

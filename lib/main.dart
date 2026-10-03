@@ -24,22 +24,37 @@ import 'fees_payment/fees_type/fees_type_bloc.dart';
 import 'firebaseApi.dart';
 import 'internet_conn/internet_connection_bloc.dart';
 import 'login/login_bloc.dart';
+import 'helper/push_notification_service.dart';
 final navigatorKey = GlobalKey<NavigatorState>();
-
 
 @pragma('vm:entry-point') // Fix for AOT compilation
 Future<void> _firebaseBackgroundMessage(RemoteMessage message) async {
   try {
-    if (message.notification != null) {
-      navigatorKey.currentState?.push(MaterialPageRoute(
-        builder: (_) => const NotificationListScreen(),
-      ));
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebaseapi.localNotiInit();
+
+    final title = message.notification?.title ??
+        message.data['notification_title'] ??
+        message.data['title'] ??
+        '';
+    final body = message.notification?.body ??
+        message.data['notification_message'] ??
+        message.data['body'] ??
+        message.data['message'] ??
+        '';
+    final image = message.notification?.android?.imageUrl ??
+        message.notification?.apple?.imageUrl ??
+        message.data['image_path'] ??
+        message.data['image'];
+
+    if (title.isNotEmpty || body.isNotEmpty) {
+      Firebaseapi.showLocalNotification(title, body, imageUrl: image);
     }
   } catch (e) {
     debugPrint("Background notification handling error: $e");
   }
 }
-
 
 Future<void> _initialization() async {
   try {
@@ -68,44 +83,14 @@ Future<void> _initialization() async {
       sound: true,
     );
 
-    // Retrieve tokens for debugging & verification
-    try {
-      if (Platform.isIOS) {
-        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        int retry = 0;
-        while (apnsToken == null && retry < 15) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-          retry++;
-        }
-        debugPrint("iOS APNS Token after wait ($retry retries): $apnsToken");
-      }
-      String? token = await FirebaseMessaging.instance.getToken();
-      debugPrint("FCM Device Token: $token");
-      if (token != null) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("fcm_token", token);
-      }
-    } catch (e) {
-      debugPrint("Error fetching tokens: $e");
-    }
+    // Retrieve tokens and safely subscribe to topics
+    PushNotificationService.subscribeTopicsSafely();
 
-    // Ensure student & school topics are subscribed if student is logged in
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? schoolCode = prefs.getString("schoolCode");
-      String? studentId = prefs.getString("studentId");
-      if (schoolCode != null && schoolCode.isNotEmpty) {
-        await FirebaseMessaging.instance.subscribeToTopic(schoolCode);
-        debugPrint("Subscribed to topic: $schoolCode");
-      }
-      if (studentId != null && studentId.isNotEmpty) {
-        await FirebaseMessaging.instance.subscribeToTopic(studentId);
-        debugPrint("Subscribed to topic: $studentId");
-      }
-    } catch (e) {
-      debugPrint("Error auto-subscribing to topics: $e");
-    }
+    // Auto-resubscribe whenever token is refreshed
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      debugPrint("FCM Device Token refreshed: $newToken");
+      PushNotificationService.subscribeTopicsSafely();
+    });
 
     // 🔔 Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {

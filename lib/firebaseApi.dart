@@ -71,7 +71,11 @@ class Firebaseapi {
     const AndroidInitializationSettings androidSettings =
     AndroidInitializationSettings('@drawable/ic_notification');
 
-    final DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
+    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
     final LinuxInitializationSettings linuxSettings =
     LinuxInitializationSettings(defaultActionName: 'Open notification');
 
@@ -81,11 +85,9 @@ class Firebaseapi {
       linux: linuxSettings,
     );
 
-
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
-
 
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
@@ -113,6 +115,7 @@ class Firebaseapi {
   @pragma('vm:entry-point')
   static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     try {
+      await localNotiInit();
       final title = message.notification?.title ??
           message.data['notification_title'] ??
           message.data['title'] ??
@@ -174,10 +177,13 @@ class Firebaseapi {
       color: const Color(0xFF2d4c9c),
     );
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+    DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      attachments: bigPicturePath != null
+          ? [DarwinNotificationAttachment(bigPicturePath)]
+          : null,
     );
 
     NotificationDetails platformDetails = NotificationDetails(
@@ -185,8 +191,9 @@ class Firebaseapi {
       iOS: iosDetails,
     );
 
+    final notificationId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
     await _flutterLocalNotificationsPlugin.show(
-      0,
+      notificationId,
       title,
       body,
       platformDetails,
