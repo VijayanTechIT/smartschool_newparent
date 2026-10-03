@@ -113,7 +113,23 @@ class Firebaseapi {
   @pragma('vm:entry-point')
   static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     try {
-      showLocalNotification(message.notification?.title, message.notification?.body);
+      final title = message.notification?.title ??
+          message.data['notification_title'] ??
+          message.data['title'] ??
+          '';
+      final body = message.notification?.body ??
+          message.data['notification_message'] ??
+          message.data['body'] ??
+          message.data['message'] ??
+          '';
+      final image = message.notification?.android?.imageUrl ??
+          message.notification?.apple?.imageUrl ??
+          message.data['image_path'] ??
+          message.data['image'];
+
+      if (title.isNotEmpty || body.isNotEmpty) {
+        showLocalNotification(title, body, imageUrl: image);
+      }
     } catch (e) {
       debugPrint("Error in FCM background handler: $e");
     }

@@ -109,13 +109,21 @@ Future<void> _initialization() async {
 
     // 🔔 Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.notification != null) {
-        final title = message.notification?.title ?? '';
-        final body = message.notification?.body ?? '';
-        final image = message.notification?.android?.imageUrl ??
-            message.notification?.apple?.imageUrl ??
-            message.data['image'];
+      final title = message.notification?.title ??
+          message.data['notification_title'] ??
+          message.data['title'] ??
+          '';
+      final body = message.notification?.body ??
+          message.data['notification_message'] ??
+          message.data['body'] ??
+          message.data['message'] ??
+          '';
+      final image = message.notification?.android?.imageUrl ??
+          message.notification?.apple?.imageUrl ??
+          message.data['image_path'] ??
+          message.data['image'];
 
+      if (title.isNotEmpty || body.isNotEmpty) {
         Firebaseapi.showLocalNotification(title, body, imageUrl: image);
       }
       try {
@@ -150,13 +158,21 @@ Future<void> _initialization() async {
 
 void _handleNotificationNavigation(RemoteMessage message) {
   try {
-    if (message.notification != null) {
-      final title = message.notification?.title ?? '';
-      final body = message.notification?.body ?? '';
-      final image = message.notification?.android?.imageUrl ??
-          message.notification?.apple?.imageUrl ??
-          message.data['image'];
+    final title = message.notification?.title ??
+        message.data['notification_title'] ??
+        message.data['title'] ??
+        '';
+    final body = message.notification?.body ??
+        message.data['notification_message'] ??
+        message.data['body'] ??
+        message.data['message'] ??
+        '';
+    final image = message.notification?.android?.imageUrl ??
+        message.notification?.apple?.imageUrl ??
+        message.data['image_path'] ??
+        message.data['image'];
 
+    if (title.isNotEmpty || body.isNotEmpty) {
       Firebaseapi.showLocalNotification(title, body, imageUrl: image);
     }
 
