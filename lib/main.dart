@@ -72,10 +72,20 @@ Future<void> _initialization() async {
     try {
       if (Platform.isIOS) {
         String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        debugPrint("iOS APNS Token: $apnsToken");
+        int retry = 0;
+        while (apnsToken == null && retry < 15) {
+          await Future.delayed(const Duration(milliseconds: 500));
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          retry++;
+        }
+        debugPrint("iOS APNS Token after wait ($retry retries): $apnsToken");
       }
       String? token = await FirebaseMessaging.instance.getToken();
       debugPrint("FCM Device Token: $token");
+      if (token != null) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString("fcm_token", token);
+      }
     } catch (e) {
       debugPrint("Error fetching tokens: $e");
     }

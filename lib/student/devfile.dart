@@ -165,12 +165,16 @@ class _StudentHomeState extends State<StudentHome> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("schoolCode", widget.student.schoolCode);
       prefs.setString("studentId", widget.student.studentId);
-      FirebaseMessaging.instance.subscribeToTopic(widget.student.schoolCode);
+      try {
+        await FirebaseMessaging.instance.subscribeToTopic(widget.student.schoolCode);
+        await FirebaseMessaging.instance.subscribeToTopic(widget.student.studentId);
+      } catch (e) {
+        debugPrint("Error subscribing to topics: $e");
+      }
       context.read<HomeWorkBloc>().add(FetchHomework(
           schoolCode: widget.student.schoolCode,
           sectionName: widget.student.studyingSection,
           gradeName: widget.student.studyingGrade));
-      FirebaseMessaging.instance.subscribeToTopic(widget.student.studentId);
       setState((){
          isFetchLoading = false;
       });
